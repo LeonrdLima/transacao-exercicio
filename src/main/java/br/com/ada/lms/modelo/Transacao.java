@@ -1,16 +1,49 @@
 package br.com.ada.lms.modelo;
 
 import java.time.LocalDate;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 
+@Entity
 public class Transacao {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // id gerado pelo banco (coluna identity)
     private Long id;
+
+    @Column(nullable = false)
     private String descricao;
+
+    @Column(nullable = false)
     private String tipo;
+
+    @Column(nullable = false)
     private String categoria;
-    private double valor;
+
+    @Column(nullable = false)
+    private Double valor;
+
+    @Column(nullable = false)
     private LocalDate data;
 
+    /** Construtor vazio exigido pelo JPA (o Hibernate cria o objeto e depois preenche os campos). */
+
+    protected Transacao() {
+    }
+
+    public Transacao(String descricao, String tipo, String categoria,
+                     double valor, LocalDate data) {
+        this.descricao = descricao;
+        this.tipo = tipo;
+        this.categoria = categoria;
+        this.valor = valor;
+        this.data = data;
+    }
+
+    /*
     public Transacao(Long id, String descricao, String tipo, String categoria, double valor, LocalDate data) {
         this.id = id;
         this.descricao = descricao;
@@ -19,7 +52,7 @@ public class Transacao {
         this.valor = valor;
         this.data = data;
     }
-
+*/
     public Long getId() {
         return id;
     }
