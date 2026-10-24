@@ -43,7 +43,7 @@ public class Transacao {
         this.data = data;
     }
 
-    /*
+
     public Transacao(Long id, String descricao, String tipo, String categoria, double valor, LocalDate data) {
         this.id = id;
         this.descricao = descricao;
@@ -52,7 +52,7 @@ public class Transacao {
         this.valor = valor;
         this.data = data;
     }
-*/
+
     public Long getId() {
         return id;
     }
