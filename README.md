@@ -19,10 +19,8 @@ Cada transação possui os seguintes atributos:
 
   `descricao`                `String`        Descrição da transação.
 
-  `tipo`                     `String`        Tipo da transação, por
-                                             exemplo, receita ou despesa,
-                                             conforme os valores adotados
-                                             pelo projeto.
+  `tipo`                     `String`        Tipo da movimentação:
+                                           `Entrada` ou `Saída`.
 
   `categoria`                `String`        Categoria da transação.
 
@@ -55,7 +53,7 @@ Componentes identificados no código:
 -   `modelo/Transacao`: entidade JPA que representa uma transação.
 -   `rest/TransacaoResource`: define as rotas HTTP.
 -   `servico/TransacaoService`: concentra as operações chamadas pelo
-    recurso.
+    recurso, incluindo a importação do CSV e o cálculo do saldo.
 -   `rest/dto/TransacaoRequest`: objeto usado para receber os dados
     enviados nas requisições.
 
@@ -164,6 +162,12 @@ classe `TransacaoResource` são:
 
 `DELETE`        `/transacoes/{id}`   Remove uma transação. `204 No Content`
 
+  `POST`          `/transacoes/importar` Importa transações de um CSV.
+                                                              `200 OK`
+
+  `GET`           `/transacoes/saldo`   Calcula o saldo somando os valores.
+                                                              `200 OK`
+
 ### 1. Listar transações
 
 ``` http
@@ -195,7 +199,7 @@ Corpo da requisição:
 ``` json
 {
   "descricao": "Compra no supermercado",
-  "tipo": "Despesa",
+  "tipo": "Saída",
   "categoria": "Alimentação",
   "valor": 150.75,
   "data": "2026-10-20"
@@ -219,7 +223,7 @@ Corpo da requisição:
 ``` json
 {
   "descricao": "Compra no supermercado",
-  "tipo": "Despesa",
+  "tipo": "Saída",
   "categoria": "Alimentação",
   "valor": 175.90,
   "data": "2026-10-21"
@@ -245,7 +249,7 @@ Substitua `1` pelo ID da transação. Em caso de sucesso, a API retorna
 {
   "id": 1,
   "descricao": "Compra no supermercado",
-  "tipo": "Despesa",
+  "tipo": "Saída",
   "categoria": "Alimentação",
   "valor": 150.75,
   "data": "2026-10-20"
@@ -253,6 +257,46 @@ Substitua `1` pelo ID da transação. Em caso de sucesso, a API retorna
 ```
 
 Os valores são apenas ilustrativos.
+
+### 6. Importar transações de um CSV
+
+``` http
+POST /transacoes/importar
+Content-Type: multipart/form-data
+```
+
+O arquivo deve ser enviado no campo multipart `file`. O formato esperado
+é:
+
+``` csv
+Data,Valor,Identificador,Descrição
+01/07/2026,0.54,a3511da2-bd78-420c-95bf-6e06fa8a0eae,Crédito em conta
+02/07/2026,-155.74,f4e5b231-876e-4e7c-8b5e-f4a6d5c0c6d4,Compra no débito - RIOCARD
+```
+
+As datas do arquivo devem usar o formato `dd/MM/yyyy`. O valor positivo
+é importado como `Entrada` e o valor negativo como `Saída`. A categoria
+inicial das transações importadas é `outro`.
+
+No Windows, usando o `curl.exe`:
+
+``` powershell
+curl.exe -F "file=@..\extrato.csv" `
+  http://localhost:8080/transacoes/importar
+```
+
+A resposta contém a lista das transações importadas, já com os
+identificadores gerados pelo banco de dados.
+
+### 7. Consultar o saldo
+
+``` http
+GET /transacoes/saldo
+```
+
+O saldo é calculado pela soma dos valores de todas as transações
+persistidas. Entradas aumentam o saldo e saídas, por serem representadas
+com valores negativos, reduzem o saldo.
 
 ## Códigos de status HTTP
 
@@ -278,8 +322,9 @@ Os valores são apenas ilustrativos.
   `409 Conflict`                 Possível conflito de negócio, somente se
                                  houver regra correspondente implementada.
 
-  `415 Unsupported Media Type`   Tipo de conteúdo não suportado; o recurso
-                                 espera JSON.
+  `415 Unsupported Media Type`   Tipo de conteúdo não suportado; os
+                                 endpoints JSON esperam JSON e o endpoint
+                                 de importação espera multipart.
   --------------------------------------------------------------------------
 
 Os códigos de erro efetivamente retornados dependem das validações,
@@ -312,10 +357,17 @@ e validadores, devem ser confirmados na estrutura atual do projeto.
 ## Observações
 
 -   A API consome e produz `application/json`.
+-   O endpoint `/transacoes/importar` recebe `multipart/form-data`, com o
+    arquivo no campo `file`.
 -   A data usa `LocalDate` e é representada nos exemplos como
     `AAAA-MM-DD`.
+-   No CSV de importação, a data usa `dd/MM/yyyy`.
+-   O tipo da movimentação é `Entrada` para valores positivos e `Saída`
+    para valores negativos.
+-   As transações importadas recebem inicialmente a categoria `outro`.
 -   O `id` é gerado pelo banco de dados.
 -   A classe `TransacaoResource` disponibiliza `GET`, `POST`, `PUT` e
-    `DELETE`; não há endpoint `PATCH` nessa classe.
+    `DELETE`, além dos endpoints de importação e saldo; não há endpoint
+    `PATCH` nessa classe.
 -   As instruções exatas de inicialização do banco e as credenciais
     dependem dos arquivos de configuração do projeto.
