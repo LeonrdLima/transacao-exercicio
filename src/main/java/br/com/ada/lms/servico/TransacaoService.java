@@ -1,6 +1,5 @@
 package br.com.ada.lms.servico;
 
-import br.com.ada.lms.excecao.ConflitoException;
 import br.com.ada.lms.excecao.RecursoNaoEncontradoException;
 import br.com.ada.lms.modelo.Transacao;
 import br.com.ada.lms.repositorio.TransacaoRepository;
@@ -9,12 +8,16 @@ import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.LocalDate;
-import java.util.Comparator;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 /**
  * Regras de negócio + "banco de dados" em memória (um Map).
@@ -53,7 +56,7 @@ public List<Transacao> listar() {
 
     public Transacao buscar(Long id) {
         return repository.findByIdOptional(id)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Aluno", id));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Transacao", id));
     }
 
     @Transactional
@@ -107,5 +110,51 @@ public List<Transacao> listar() {
 
  */
 
+    @Transactional
+    public List<Transacao> importar(FileUpload file) {
+        List<Transacao> transacoes = new ArrayList<>();
+
+        try(BufferedReader reader = Files.newBufferedReader(file.filePath(), StandardCharsets.UTF_8)) {
+            String linha;
+            reader.readLine();
+
+            String categoriaPadrao = "outro";
+            DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+            while ((linha = reader.readLine()) != null) {
+                if (linha.isBlank()) {
+                    continue;
+                }
+
+                String[] campos = linha.split(",");
+                if (campos.length != 4) {
+                    throw new IllegalArgumentException("Linha de CSV inválida: " + linha);
+                }
+
+                LocalDate data = LocalDate.parse(campos[0], formato);
+                double valor = Double.parseDouble(campos[1]);
+                String descricao = campos[3];
+                String categoria = categoriaPadrao;
+                String tipo = valor < 0 ? "Saída" : "Entrada";
+
+                Transacao transacao = new Transacao(descricao, tipo, categoria, valor, data);
+                repository.persist(transacao);
+                transacoes.add(transacao);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao importar arquivo", e);
+        }
+
+        return transacoes;
     }
 
+    // calculo do extrato
+    public double calcularSaldo() {
+        List<Transacao> transacoes = listar();
+        double saldo = 0.0;
+        for(Transacao transacao : transacoes) {
+            saldo += transacao.getValor();
+        }
+        return saldo;
+    }
+}

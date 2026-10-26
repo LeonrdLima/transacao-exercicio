@@ -11,7 +11,7 @@ import jakarta.persistence.Id;
 public class Transacao {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // id gerado pelo banco (coluna identity)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
@@ -24,12 +24,10 @@ public class Transacao {
     private String categoria;
 
     @Column(nullable = false)
-    private Double valor;
+    private double valor;
 
     @Column(nullable = false)
     private LocalDate data;
-
-    /** Construtor vazio exigido pelo JPA (o Hibernate cria o objeto e depois preenche os campos). */
 
     protected Transacao() {
     }
@@ -43,8 +41,8 @@ public class Transacao {
         this.data = data;
     }
 
-
-    public Transacao(Long id, String descricao, String tipo, String categoria, double valor, LocalDate data) {
+    public Transacao(Long id, String descricao, String tipo, String categoria,
+                     double valor, LocalDate data) {
         this.id = id;
         this.descricao = descricao;
         this.tipo = tipo;

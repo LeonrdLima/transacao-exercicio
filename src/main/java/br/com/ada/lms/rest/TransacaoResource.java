@@ -21,6 +21,9 @@ import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 
+import org.jboss.resteasy.reactive.RestForm;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
+
 /**
  * CRUD de alunos.
  *
@@ -77,5 +80,19 @@ public class TransacaoResource {
     public Response remover(@PathParam("id") Long id) {
         service.remover(id);
         return Response.noContent().build();
+    }
+
+    @POST
+    @Path("/importar")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response importar(@RestForm("file") FileUpload file) {
+        List<Transacao> transacoes = service.importar(file);
+        return Response.ok(transacoes).build();
+    }
+
+    @GET
+    @Path("/saldo")
+    public double calcularSaldo() {
+        return service.calcularSaldo();
     }
 }
