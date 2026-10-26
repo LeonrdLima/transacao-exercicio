@@ -7,44 +7,27 @@ import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.notNullValue;
 
-/**
- * Teste de integração: sobe a aplicação e faz requisições HTTP de verdade,
- * conferindo o status (2xx/4xx) e o JSON de resposta.
- */
 @QuarkusTest
-class AlunoResourceTest {
+class TransactionResourceTest {
 
-    private Integer criarAluno(String nome, String email) {
+    private Integer criarTransacao() {
         return given()
                 .contentType(ContentType.JSON)
                 .body("""
-                        {"nome": "%s", "email": "%s"}
-                        """.formatted(nome, email))
-                .when().post("/alunos")
+                        {
+                          "descricao": "Compra no supermercado",
+                          "tipo": "Saída",
+                          "categoria": "Alimentação",
+                          "valor": -150.75,
+                          "data": "2026-10-20"
+                        }
+                        """)
+                .when().post("/transacoes")
                 .then()
                 .statusCode(201)
                 .extract().path("id");
-    }
-
-    @Test
-    void getListaRetorna200() {
-        given()
-                .when().get("/alunos")
-                .then()
-                .statusCode(200)
-                .body("email", hasItem("ana@email.com"));
-    }
-
-    @Test
-    void getPorIdInexistenteRetorna404() {
-        given()
-                .when().get("/alunos/9999")
-                .then()
-                .statusCode(404)
-                .body("erro", containsString("9999"));
     }
 
     @Test
@@ -52,140 +35,59 @@ class AlunoResourceTest {
         given()
                 .contentType(ContentType.JSON)
                 .body("""
-                        {"nome": "Carlos", "email": "carlos@email.com"}
+                        {
+                          "descricao": "Salário",
+                          "tipo": "Entrada",
+                          "categoria": "Renda",
+                          "valor": 5000,
+                          "data": "2026-10-01"
+                        }
                         """)
-                .when().post("/alunos")
+                .when().post("/transacoes")
                 .then()
                 .statusCode(201)
-                .header("Location", containsString("/alunos/"))
+                .header("Location", containsString("/transacoes/"))
                 .body("id", notNullValue())
-                .body("nome", equalTo("Carlos"));
+                .body("descricao", equalTo("Salário"));
     }
 
     @Test
-    void postInvalidoRetorna400() {
+    void getPorIdInexistenteRetorna404() {
         given()
-                .contentType(ContentType.JSON)
-                .body("""
-                        {"nome": "", "email": "nao-e-email"}
-                        """)
-                .when().post("/alunos")
+                .when().get("/transacoes/9999")
                 .then()
-                .statusCode(400);
+                .statusCode(404)
+                .body("erro", containsString("9999"));
     }
 
     @Test
-    void postSemCorpoRetorna400() {
-        given()
-                .contentType(ContentType.JSON)
-                .when().post("/alunos")
-                .then()
-                .statusCode(400);
-    }
-
-    @Test
-    void postComEmailRepetidoRetorna409() {
-        criarAluno("Duplicado", "duplicado@email.com");
+    void putAtualizaTodosOsCampos() {
+        Integer id = criarTransacao();
 
         given()
                 .contentType(ContentType.JSON)
                 .body("""
-                        {"nome": "Outro", "email": "duplicado@email.com"}
+                        {
+                          "descricao": "Compra atualizada",
+                          "tipo": "Saída",
+                          "categoria": "Casa",
+                          "valor": -175.90,
+                          "data": "2026-10-21"
+                        }
                         """)
-                .when().post("/alunos")
-                .then()
-                .statusCode(409);
-    }
-
-    @Test
-    void postComContentTypeErradoRetorna415() {
-        given()
-                .contentType(ContentType.TEXT)
-                .body("nome=Ana")
-                .when().post("/alunos")
-                .then()
-                .statusCode(415);
-    }
-
-    @Test
-    void putSubstituiTodosOsCampos() {
-        Integer id = criarAluno("Para PUT", "put@email.com");
-
-        given()
-                .contentType(ContentType.JSON)
-                .body("""
-                        {"nome": "Nome Novo", "email": "put-novo@email.com"}
-                        """)
-                .when().put("/alunos/" + id)
+                .when().put("/transacoes/" + id)
                 .then()
                 .statusCode(200)
-                .body("nome", equalTo("Nome Novo"))
-                .body("email", equalTo("put-novo@email.com"));
-    }
-
-    @Test
-    void putIncompletoRetorna400() {
-        Integer id = criarAluno("Put Incompleto", "put-incompleto@email.com");
-
-        given()
-                .contentType(ContentType.JSON)
-                .body("""
-                        {"nome": "Só o nome"}
-                        """)
-                .when().put("/alunos/" + id)
-                .then()
-                .statusCode(400);
-    }
-
-    @Test
-    void patchAlteraSoOsCamposEnviados() {
-        Integer id = criarAluno("Para PATCH", "patch@email.com");
-
-        given()
-                .contentType(ContentType.JSON)
-                .body("""
-                        {"nome": "Só o nome mudou"}
-                        """)
-                .when().patch("/alunos/" + id)
-                .then()
-                .statusCode(200)
-                .body("nome", equalTo("Só o nome mudou"))
-                .body("email", equalTo("patch@email.com"));
-    }
-
-    @Test
-    void patchComEmailInvalidoRetorna400() {
-        Integer id = criarAluno("Patch Inválido", "patch-invalido@email.com");
-
-        given()
-                .contentType(ContentType.JSON)
-                .body("""
-                        {"email": "sem-arroba"}
-                        """)
-                .when().patch("/alunos/" + id)
-                .then()
-                .statusCode(400)
-                .body("erro", equalTo("email inválido"));
-    }
-
-    @Test
-    void patchInexistenteRetorna404() {
-        given()
-                .contentType(ContentType.JSON)
-                .body("""
-                        {"nome": "Ninguém"}
-                        """)
-                .when().patch("/alunos/9999")
-                .then()
-                .statusCode(404);
+                .body("descricao", equalTo("Compra atualizada"))
+                .body("categoria", equalTo("Casa"));
     }
 
     @Test
     void deleteRetorna204EDepois404() {
-        Integer id = criarAluno("Para DELETE", "delete@email.com");
+        Integer id = criarTransacao();
 
-        given().when().delete("/alunos/" + id).then().statusCode(204);
-        given().when().get("/alunos/" + id).then().statusCode(404);
-        given().when().delete("/alunos/" + id).then().statusCode(404);
+        given().when().delete("/transacoes/" + id).then().statusCode(204);
+        given().when().get("/transacoes/" + id).then().statusCode(404);
+        given().when().delete("/transacoes/" + id).then().statusCode(404);
     }
 }

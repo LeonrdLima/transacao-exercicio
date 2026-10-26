@@ -1,101 +1,46 @@
 ### Arquivo para o HTTP Client do IntelliJ / extensão REST Client do VS Code.
-### Suba a aplicação com ./mvnw quarkus:dev e clique em "Run" em cada requisição.
+### Suba a aplicação com ./mvnw quarkus:dev antes de executar as requisições.
 
 @base = http://localhost:8080
 
-### ===================== ALUNOS =====================
+### Lista todas as transações
+GET {{base}}/transacoes
 
-### 200 - lista todos
-GET {{base}}/alunos
+### Busca uma transação por ID
+GET {{base}}/transacoes/1
 
-### 200 - busca por id
-GET {{base}}/alunos/1
-
-### 404 - id inexistente
-GET {{base}}/alunos/999
-
-### 201 - cria (veja o header Location na resposta)
-POST {{base}}/alunos
+### Cria uma transação
+POST {{base}}/transacoes
 Content-Type: application/json
 
-{"nome": "Carlos Silva", "email": "carlos@email.com"}
+{
+  "descricao": "Compra no supermercado",
+  "tipo": "Saída",
+  "categoria": "Alimentação",
+  "valor": -150.75,
+  "data": "2026-10-20"
+}
 
-### 400 - dados inválidos
-POST {{base}}/alunos
+### Atualiza uma transação
+PUT {{base}}/transacoes/1
 Content-Type: application/json
 
-{"nome": "", "email": "nao-e-email"}
+{
+  "descricao": "Compra atualizada",
+  "tipo": "Saída",
+  "categoria": "Casa",
+  "valor": -175.90,
+  "data": "2026-10-21"
+}
 
-### 409 - email já cadastrado
-POST {{base}}/alunos
-Content-Type: application/json
+### Remove uma transação
+DELETE {{base}}/transacoes/1
 
-{"nome": "Outra Ana", "email": "ana@email.com"}
+### Importa transações de um arquivo CSV
+POST {{base}}/transacoes/importar
+Content-Type: multipart/form-data
 
-### 415 - Content-Type errado
-POST {{base}}/alunos
-Content-Type: text/plain
+file=@extrato.csv
 
-nome=Carlos
-
-### 200 - PUT substitui tudo (todos os campos obrigatórios)
-PUT {{base}}/alunos/1
-Content-Type: application/json
-
-{"nome": "Ana Souza Lima", "email": "ana.lima@email.com"}
-
-### 400 - PUT sem todos os campos
-PUT {{base}}/alunos/1
-Content-Type: application/json
-
-{"nome": "Só o nome"}
-
-### 200 - PATCH altera só o que foi enviado
-PATCH {{base}}/alunos/2
-Content-Type: application/json
-
-{"nome": "Bruno Lima Jr."}
-
-### 204 - remove (sem corpo na resposta)
-DELETE {{base}}/alunos/2
-
-### 404 - remover de novo
-DELETE {{base}}/alunos/2
-
-### ===================== TRILHAS =====================
-
-GET {{base}}/trilhas
-
-###
-POST {{base}}/trilhas
-Content-Type: application/json
-
-{"nome": "DevOps", "descricao": "CI/CD e containers", "cargaHoraria": 60}
-
-###
-PATCH {{base}}/trilhas/1
-Content-Type: application/json
-
-{"cargaHoraria": 150}
-
-###
-DELETE {{base}}/trilhas/2
-
-### ===================== DOCENTES =====================
-
-GET {{base}}/docentes
-
-###
-POST {{base}}/docentes
-Content-Type: application/json
-
-{"nome": "Elisa Martins", "email": "elisa@ada.tech", "especialidade": "Front-end"}
-
-###
-PUT {{base}}/docentes/1
-Content-Type: application/json
-
-{"nome": "Carla Mendes", "email": "carla@ada.tech", "especialidade": "Java e Quarkus"}
-
-###
-DELETE {{base}}/docentes/2
+### Consulta o saldo
+GET {{base}}/transacoes/saldo

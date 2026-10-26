@@ -25,16 +25,7 @@ import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 /**
- * CRUD de alunos.
- *
- *   GET    /alunos       -> 200 lista
- *   GET    /alunos/{id}  -> 200 aluno | 404
- *   POST   /alunos       -> 201 aluno criado + header Location | 400 | 409
- *   PUT    /alunos/{id}  -> 200 aluno atualizado (todos os campos) | 400 | 404 | 409
- *   PATCH  /alunos/{id}  -> 200 aluno atualizado (só campos enviados) | 400 | 404 | 409
- *   DELETE /alunos/{id}  -> 204 sem corpo | 404
- *
- * Os 4xx são gerados por exceções (ApiExceptionMapper) e pela validação (@Valid).
+ * CRUD de transações, importação de extrato e consulta de saldo.
  */
 @Path("/transacoes")
 @Produces(MediaType.APPLICATION_JSON)
@@ -59,8 +50,7 @@ public class TransacaoResource {
     }
 
     /**
-     * Aqui retornamos Response (e não Aluno) porque queremos controlar o status:
-     * 201 Created + header Location apontando para o novo recurso.
+     * Retorna 201 Created com o header Location apontando para o novo recurso.
      */
     @POST
     public Response criar(@NotNull @Valid TransacaoRequest dados, @Context UriInfo uriInfo) {

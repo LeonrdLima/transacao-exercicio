@@ -128,8 +128,7 @@ docker compose down
 apagar os dados persistidos. Use-o somente se quiser remover esses
 dados.
 
-Se o projeto usar o nome de container, banco e usuário `lms` da
-configuração original, o acesso ao PostgreSQL pode ser feito com:
+Com a configuração atual, o acesso ao PostgreSQL pode ser feito com:
 
 ``` bash
 docker exec -it lms-postgres psql -U lms -d lms
@@ -344,15 +343,15 @@ TransacaoService
 Persistência / banco de dados
 ```
 
--   **Resource:** recebe as requisições HTTP e define os endpoints.
--   **Service:** executa as operações solicitadas pelo resource.
+-   **Resource:** recebe as requisições HTTP e define os endpoints de transações.
+-   **Service:** executa as operações de transações, importação e saldo.
 -   **Entidade `Transacao`:** representa os dados da transação e o
     mapeamento JPA.
 -   **DTO `TransacaoRequest`:** representa os dados recebidos nas
     requisições.
 
-Os nomes e a organização de outros pacotes, como repositórios, exceções
-e validadores, devem ser confirmados na estrutura atual do projeto.
+O repositório e o mapeador de exceções completam o fluxo de persistência e
+tratamento de erros da API.
 
 ## Observações
 

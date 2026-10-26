@@ -6,14 +6,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * Dados que o cliente envia no corpo do POST/PUT/PATCH.
+ * Dados que o cliente envia no corpo do POST/PUT.
  * Repare que não tem "id": quem gera o id é o servidor.
  *
- * As anotações de validação só são verificadas quando o parâmetro tem @Valid
- * (POST e PUT). Se falharem, o Quarkus responde 400 Bad Request sozinho.
+ * Se as validações falharem, o Quarkus responde 400 Bad Request.
  */
 public record TransacaoRequest(
-        @NotBlank(message = "nome é obrigatório")
+        @NotBlank(message = "descrição é obrigatória")
         String descricao,
 
         @NotBlank(message = "tipo é obrigatório")
